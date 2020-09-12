@@ -85,16 +85,165 @@ conn.close()
 
 4)	**Stream the tweets: write and understand the code**
 
-Now that we created our Twitter developer account and app, that we set up an AWS account and our instance, and that we have a place to store our tweets, we can move on to the code used to collect tweets. I used python and the Tweepy library, which is specifically designed to ease working with Twitter’s APIs. Now’s the time to get your unique keys and tokens.
+Now that we created our Twitter developer account and app, that we set up an AWS account and our instance, and that we have a place to store our tweets, we can move on to the code used to collect tweets. I used python and the Tweepy library, which is specifically designed to ease working with Twitter’s APIs. 
 
+Now’s the time to get your unique keys and tokens.
 
+```python
+# import all required libraries
+import tweepy
+import sys
+import json
+import time
+import sqlite3
 
+# prepare a list of key words you want to use to filter the API stream
+keywords = ['coronavirus', 'covid-19', 'corona virus', 'virus', 'flu', 'cold',
+'disease', 'outbreak', 'epidemic', 'pandemic', 'Wuhan', 'health', 'public health',
+'SARS', 'ebola', 'WHO', 'CDC', 'cases', 'death', 'fatality', 'fatalities',
+'recovery', 'recoveries', 'symptoms', 'pneumonia', 'fever', 'cough', 'headache',
+'prevention', 'masks', 'transmission', 'transmit', 'contagion', 'contagious',
+'spread', 'widespread', 'infection', 'infections', 'infected', 'elderly',
+'treatment', 'self-isolate', 'quarantine', 'tested positive', 'vaccine',
+'virus fear', 'treatment', 'diagnosis', 'diagnosed', 'diagnostics',
+'Iran', 'China', 'Korea', 'Italy', 'emergency', 'NHS', 'PHE', 'lockdown',
+'UKlockdown', 'social distancing', 'confinement', 'confined', 'deconfinement']
+
+# Twitter authentication
+# these codes are unique, do not share them
+auth = tweepy.OAuthHandler("XXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXX")
+auth.set_access_token("XXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXX")
+api = tweepy.API(auth)
+
+# create a first function called store_data
+def store_data(created_at, id_str, text, truncated, user_id_str, user_location,
+user_description, utc_offset, time_zone, geo_enabled, geo_long, geo_lat, long_coord,
+lat_coord, place_type, place_name, place_fullname, place_country, place_bounding_box_type,
+place_bounding_box_coords, full_tweet_text):
+
+'''The store_data function will store only the fields of the data received that
+are of interest. '''
+
+    # connect to the DB we created in section 3. I called mine 'twitter.db'
+    conn = sqlite3.connect('twitter.db')
+    c = conn.cursor()
+
+    # this is the SQL query I will use to fill the table. This is naming the
+    # column names of the table and saying that values will fill these columns
+    # the specific values are marked by ?. Note that there are as many ? as
+    # number of columns.
+    insert_query = "INSERT INTO tweet_info (created_at, id_str, text, truncated, "\
+    "user_id_str, user_location, user_description, utc_offset, time_zone, "\
+    "geo_enabled, geo_long, geo_lat, long_coord, lat_coord, place_type, place_name, "\
+    "place_fullname, place_country, place_bounding_box_type, place_bounding_box_coords, "\
+    "full_tweet_text) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+
+    # 
+    c.execute(insert_query, (created_at, id_str, text, truncated, user_id_str,
+    user_location, user_description, utc_offset, time_zone, geo_enabled, geo_long,
+    geo_lat, long_coord, lat_coord, place_type, place_name, place_fullname,
+    place_country, place_bounding_box_type, place_bounding_box_coords, full_tweet_text))
+    conn.commit()
+    c.close()
+    conn.close()
+    return
+
+# Stream Listener class
+class StreamListener(tweepy.StreamListener):
+
+    # When data is received
+    def on_data(self, data):
+
+        # Error handling
+        try:
+
+            # Make it JSON
+            datajson = json.loads(data)
+
+            # grab the wanted data from the Tweet
+            created_at = datajson['created_at']
+            id_str = datajson['id_str']
+            text = datajson['text']
+            truncated = datajson['truncated']
+            user_id_str = datajson['user']['id_str']
+            user_location = datajson['user']['location']
+            user_description = datajson['user']['description']
+            utc_offset = datajson['user']['utc_offset']
+            time_zone = datajson['user']['time_zone']
+            geo_enabled = datajson['user']['geo_enabled']
+
+            if datajson['coordinates'] != None:
+                geo_long = datajson['geo']['coordinates'][1]
+                geo_lat = datajson['geo']['coordinates'][0]
+            else:
+                geo_long = None
+                geo_lat = None
+
+            if datajson['coordinates'] != None:
+                long_coord = datajson['coordinates']['coordinates'][0]
+                lat_coord = datajson['coordinates']['coordinates'][1]
+            else:
+                long_coord = None
+                lat_coord = None
+
+            if datajson['place'] != None:
+                place_type = datajson['place']['place_type']
+                place_name = datajson['place']['name']
+                place_fullname = datajson['place']['full_name']
+                place_country = datajson['place']['country']
+                place_bounding_box_type = datajson['place']['bounding_box']['type']
+                place_bounding_box_coords = str(datajson['place']['bounding_box']['coordinates'])
+            else:
+                place_type = None
+                place_name = None
+                place_fullname = None
+                place_country = None
+                place_bounding_box_type = None
+                place_bounding_box_coords = None
+
+            try:
+                full_tweet_text = datajson['retweeted_status']['extended_tweet']['full_text']
+            except KeyError:
+                full_tweet_text = None
+
+            # insert the data into the sqlite3 database
+            store_data(created_at, id_str, text, truncated, user_id_str,
+            user_location, user_description, utc_offset, time_zone, geo_enabled,
+            geo_long, geo_lat, long_coord, lat_coord, place_type, place_name,
+            place_fullname,place_country, place_bounding_box_type,
+            place_bounding_box_coords, full_tweet_text)
+            print("success")
+
+        # Let me know if something bad happens
+        except Exception as e:
+            print(e)
+            pass
+
+        return True
+
+# Driver
+if __name__ == "__main__":
+    while True:
+
+        # Run the stream!
+        l = StreamListener()
+        stream = tweepy.Stream(auth, l)
+        try:
+            print("streaming...")
+            # Filter the stream for keywords and english language
+            stream.filter(track = keywords, languages = ['en'])
+
+        except Exception as e:
+            print("error. Restarting Stream... Error:")
+            time.sleep(60)
+```
 
 5)	**Stream the tweets: run the code in your AWS EC2 instance**
 
 I used FileZilla to transfer my .py code files from my laptop to the instance in order to run the code on AWS. Click here to download FileZilla for Mac; or here to get it for Windows (there is also a 32bit version available for Windows). Go through the installation process.
 
 Once it is installed, go to “File” and click on “Site Manager …”. Create a new site. Here is how you should fill in the blanks:
+
 •	Protocol: Select “SFTP – SSH File Transfer Protocol”.
 •	Host: Sign into your AWS account. Click on “EC2” then “Running Instances” to view your EC2 instances and copy the Public DNS (IPv4). This information is found either by scrolling to the right of the instance row or can be directly copied from the description of your instance. Paste this host reference here.
 •	Logon type: Select “Key file”.
