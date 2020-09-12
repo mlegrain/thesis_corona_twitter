@@ -244,11 +244,11 @@ I used FileZilla to transfer my .py code files from my laptop to the instance in
 
 Once it is installed, go to “File” and click on “Site Manager …”. Create a new site. Here is how you should fill in the blanks:
 
-•	Protocol: Select “SFTP – SSH File Transfer Protocol”.
-•	Host: Sign into your AWS account. Click on “EC2” then “Running Instances” to view your EC2 instances and copy the Public DNS (IPv4). This information is found either by scrolling to the right of the instance row or can be directly copied from the description of your instance. Paste this host reference here.
-•	Logon type: Select “Key file”.
-•	User: Write “ubuntu” as when you follow the suggested tutorial this is what you set up.
-•	Key file: Select the path where you store your AWS access key.
+-	Protocol: Select “SFTP – SSH File Transfer Protocol”.
+-	Host: Sign into your AWS account. Click on “EC2” then “Running Instances” to view your EC2 instances and copy the Public DNS (IPv4). This information is found either by scrolling to the right of the instance row or can be directly copied from the description of your instance. Paste this host reference here.
+-	Logon type: Select “Key file”.
+-	User: Write “ubuntu” as when you follow the suggested tutorial this is what you set up.
+-	Key file: Select the path where you store your AWS access key.
 
 Now that you created a connection to transfer from/to, you can connect to it by clicking on “Server” then “Reconnect” or by going in “File”, “Site Manager…”, clicking on the site you want to connect to and clicking “Connect”. Another way is also to click on the icon with a green tick. You will now see on the right-hand side your EC2 instance directory.
 
@@ -291,13 +291,19 @@ If you forgot your code process number, do not worry. Here’s an easy tip, in t
 
 In my case streaming for months about THE hot topic of the moment means that I have many .db files. Here’s how to merge two databases if you are interested.
 
-Open terminal. Set a working directory where your databases are stored. Run sqlite3 “db_A.db”. The SQLite interface will now open. Note that if for some reason your mac does not have it follow this. Follow these steps, run:
+Open terminal. Set a working directory where your databases are stored. Follow these steps, run:
 
 ```bash
-•	“attach “db_B.db” as toMerge;” – this links a database to the main one.
-•	 “BEGIN;”
-•	“insert into tweet_info select * from toMerge.tweet_info;” – here you are copying all rows from the linked database to the main database.
-•	“COMMIT;” – saving the changes.
-•	“detach database toMerge;” – unlinking both databases.
+sqlite3 “db_A.db” # The SQLite interface will now open
+```
+
+Note that if for some reason your mac does not have it follow this.
+
+```bash
+“attach “db_B.db” as toMerge;” # this links a database to the main one.
+“BEGIN;”
+“insert into tweet_info select * from toMerge.tweet_info;” # here you are copying all rows from the linked database to the main database.
+“COMMIT;” # saving the changes.
+“detach database toMerge;” # unlinking both databases.
 ```
 Now, exit sqlite by pressing on “control” and “d”. Both databases should now be merged into “db_A.db”.
