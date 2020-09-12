@@ -35,7 +35,7 @@ Now that we have an AWS account, we need to create our EC2 instance. I followed 
 
 I decided to store my data in a SQLite database, as it is a light weight database which was designed to be efficient, reliable, independent and simple. However, note that I recognize in hindsight that for the purpose of my project, it would have made more sense to use a non-relational database. 
 
-In order to create this database and conduct my data collection, I used Python.
+In order to create this database and conduct my data collection, I used **Python**.
 
 Onto the code… Don’t worry, I commented my code thoroughly to make sure each step is clear to you!
 
@@ -43,7 +43,7 @@ First, I created a database to store the collected data.
 
 Here’s the code I wrote:
 
-```{python}
+```python
 # import the required library
 import sqlite3
 
@@ -83,49 +83,72 @@ conn.commit()
 conn.close()
 ```
 
+4)	**Stream the tweets: write and understand the code**
+
+Now that we created our Twitter developer account and app, that we set up an AWS account and our instance, and that we have a place to store our tweets, we can move on to the code used to collect tweets. I used python and the Tweepy library, which is specifically designed to ease working with Twitter’s APIs. Now’s the time to get your unique keys and tokens.
 
 
 
 
+5)	**Stream the tweets: run the code in your AWS EC2 instance**
 
+I used FileZilla to transfer my .py code files from my laptop to the instance in order to run the code on AWS. Click here to download FileZilla for Mac; or here to get it for Windows (there is also a 32bit version available for Windows). Go through the installation process.
 
+Once it is installed, go to “File” and click on “Site Manager …”. Create a new site. Here is how you should fill in the blanks:
+•	Protocol: Select “SFTP – SSH File Transfer Protocol”.
+•	Host: Sign into your AWS account. Click on “EC2” then “Running Instances” to view your EC2 instances and copy the Public DNS (IPv4). This information is found either by scrolling to the right of the instance row or can be directly copied from the description of your instance. Paste this host reference here.
+•	Logon type: Select “Key file”.
+•	User: Write “ubuntu” as when you follow the suggested tutorial this is what you set up.
+•	Key file: Select the path where you store your AWS access key.
 
+Now that you created a connection to transfer from/to, you can connect to it by clicking on “Server” then “Reconnect” or by going in “File”, “Site Manager…”, clicking on the site you want to connect to and clicking “Connect”. Another way is also to click on the icon with a green tick. You will now see on the right-hand side your EC2 instance directory.
 
+Transfer both .py files you have for 1) creating your database and 2) streaming the tweets from a directory on your laptop or hard drive onto the AWS instance.
 
+Now that the code is in the instance, open a terminal window. Change your directory to the place where your AWS key is located using “cd /the_path_where_the_key_is/”. Connect to your instance using the following line of code: ssh -i “key_name” ubuntu@“your_IP_address”. Note that your IP address can be found under IPv4 Public IP either by scrolling to the right of the instance row or copying it from the description of your instance. You should now be connected to your instance from your terminal. There will be a message welcoming you onto the system. 
 
+Now, you can run the code. First, run “python create_db.py”. As we saw above, this will create the database with our desired table. Second, run “nohup python DBstream.py &”. Using nohup enables the code to run in the background even if you disconnect yourself from the instance. The output returned from your code will be stored in a nohup.out file. When you run this line of code, a unique code process number will be returned. Be sure to keep this number safe as you will need it to kill this process.
 
-You can use the [editor on GitHub](https://github.com/mlegrain/thesis_corona_twitter/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+Now that your code is up, running and that the tweets are being collected, you can log out from your instance on terminal by clicking on “control” and “d”.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+6)	**Transfer the data you collected onto your computer or hard drive**
 
-### Markdown
+If you followed the tutorial I suggested above to set up your AWS instance, there is 30GB of storage on your instance. This means that once you are approaching the capacity of your instance, you need to transfer the data and store it somewhere else, such as on your computer if it has enough storage space or on a hard drive. 
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+Here are two options to check how much storage is left on your instance:
 
-```markdown
-Syntax highlighted code block
+a.	As in 5), open a terminal window. Change your directory to the place where your AWS key is located using “cd /the_path_where_the_key_is/”. Connect to your instance using the following line of code: ssh -i “key_name” ubuntu@“your_IP_address”. The welcome message usually tells you how much storage is in use next to “Usage of /:”. However, sometimes the welcome message looks different. Therefore, here is a second hack:
+b.	Open FileZilla, connect to the instance (click the icon with the green tick). Under the directory list it will indicate the “Total Size” used up. Once it gets close to 20GB, that’s the maximum to transfer your file. Indeed, 10GB are used by the instance itself.
 
-# Header 1
-## Header 2
-### Header 3
+As mentioned above in 5), I use FileZilla for transfers to and from my AWS instance. This time, you want to transfer the data collected on AWS to your computer or hard drive.
 
-- Bulleted
-- List
+Connect to your connection as mentioned before (click the icon with the green tick). Now that the directory appeared on the right, change the name of the file you want to transfer to something meaningful. This will interrupt the streaming process slightly, as no more tweets are being fed into this file. Double click on this file. It will now transfer onto the directory selected on the left. You can now delete the nohup.out file and the twitter.db file (as the new one is empty).
 
-1. Numbered
-2. List
+I ran into quite a few issues during transfers as 20GB takes a while or can even crash when your WiFi isn’t the best. To avoid this problem, I advise you to connect directly to your internet with an Ethernet cable. 
 
-**Bold** and _Italic_ and `Code` text
+Once the transfer is done, you can disconnect from the connection.
 
-[Link](url) and ![Image](src)
+7)	**Continue the streaming after the transfer**
+
+In my case, I continuously streamed for months. Therefore, as soon as my file was in the process of being transferred, I made sure to get the streaming back and running.
+
+Remember the code process number generated after running “nohup python DBstream.py &” in Bash? Now, open terminal and reconnect to your EC2 instance, as we did above. Run “kill “process_number”” to interrupt the previous process. 
+
+To start a new one, run “python create_db.py” and then “nohup python DBstream.py &” once more. Now, your stream is working again. 
+
+If you forgot your code process number, do not worry. Here’s an easy tip, in terminal still in your instance, run “ps -ef |grep python” this will output all the processes up and running using python. You will see that one of the rows is for our code process “python DBstream.py”. To the left, you can find the process number.
+
+8)	**Merging all your databases together**
+
+In my case streaming for months about THE hot topic of the moment means that I have many .db files. Here’s how to merge two databases if you are interested.
+
+Open terminal. Set a working directory where your databases are stored. Run sqlite3 “db_A.db”. The SQLite interface will now open. Note that if for some reason your mac does not have it follow this. Follow these steps, run:
+
+```bash
+•	“attach “db_B.db” as toMerge;” – this links a database to the main one.
+•	 “BEGIN;”
+•	“insert into tweet_info select * from toMerge.tweet_info;” – here you are copying all rows from the linked database to the main database.
+•	“COMMIT;” – saving the changes.
+•	“detach database toMerge;” – unlinking both databases.
 ```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/mlegrain/thesis_corona_twitter/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+Now, exit sqlite by pressing on “control” and “d”. Both databases should now be merged into “db_A.db”.
