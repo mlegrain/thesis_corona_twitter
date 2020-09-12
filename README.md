@@ -240,7 +240,7 @@ if __name__ == "__main__":
 
 5)	**Stream the tweets: run the code in your AWS EC2 instance**
 
-I used FileZilla to transfer my .py code files from my laptop to the instance in order to run the code on AWS. Click here to download FileZilla for Mac; or here to get it for Windows (there is also a 32bit version available for Windows). Go through the installation process.
+I used [FileZilla](https://filezilla-project.org/) to transfer my .py code files from my laptop to the instance in order to run the code on AWS. Click [here](https://filezilla-project.org/download.php?platform=osx) to download FileZilla for Mac; or [here](https://filezilla-project.org/download.php?platform=win64) to get it for Windows (there is also a 32bit version available for Windows). Go through the installation process.
 
 Once it is installed, go to “File” and click on “Site Manager …”. Create a new site. Here is how you should fill in the blanks:
 
@@ -294,16 +294,17 @@ In my case streaming for months about THE hot topic of the moment means that I h
 Open terminal. Set a working directory where your databases are stored. Follow these steps, run:
 
 ```bash
-sqlite3 “db_A.db” # The SQLite interface will now open
+sqlite3 "db_A.db" # The SQLite interface will now open
 ```
 
-Note that if for some reason your mac does not have it follow this.
+Note that if for some reason your mac does not have it follow [this](https://tableplus.com/blog/2018/08/download-install-sqlite-for-mac-osx-in-5-minutes.html).
 
 ```bash
-“attach “db_B.db” as toMerge;” # this links a database to the main one.
-“BEGIN;”
-“insert into tweet_info select * from toMerge.tweet_info;” # here you are copying all rows from the linked database to the main database.
-“COMMIT;” # saving the changes.
-“detach database toMerge;” # unlinking both databases.
+# Note that we have now entered the SQLite interface, statements are closed with ;
+attach "db_B.db" as toMerge; # this links a database to the main one.
+BEGIN;
+insert into tweet_info select * from toMerge.tweet_info; # here you are copying all rows from the linked database to the main database.
+COMMIT; # saving the changes.
+detach database toMerge; # unlinking both databases.
 ```
 Now, exit sqlite by pressing on “control” and “d”. Both databases should now be merged into “db_A.db”.
