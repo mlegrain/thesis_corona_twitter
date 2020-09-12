@@ -17,7 +17,7 @@ As mentioned on Twitter’s developer page, “All new developers must apply for
 
 Once your developer account is created and verified, head on [here](https://twitter.com/login?redirect_after_login=https%3A%2F%2Fdeveloper.twitter.com%2Fen%2Fapps) to create a new app. Once you filled in the details, you can create your access token. 
 
-Two keys, (1) API key – also known as consumer key – and (2) API secret key –known as consumer secret, and two tokens, (1) Access token – or OAuth access token – and (2) Access token secret – or OAuth access token secret, are needed to connect to the API. These codes are unique to your account and should not be shared. Make sure to note down your Access token and Access token secret as these two codes will not be visible after creation.
+Two keys, (1) *API key* – also known as consumer key – and (2) *API secret key* –known as consumer secret, and two tokens, (1) Access token – or OAuth access token – and (2) Access token secret – or OAuth access token secret, are needed to connect to the API. These codes are unique to your account and should not be shared. Make sure to note down your Access token and Access token secret as these two codes will not be visible after creation.
 
 Congratulations! You now successfully created an app. You can now use it to connect to Twitter’s APIs. 
 
@@ -121,8 +121,10 @@ user_description, utc_offset, time_zone, geo_enabled, geo_long, geo_lat, long_co
 lat_coord, place_type, place_name, place_fullname, place_country, place_bounding_box_type,
 place_bounding_box_coords, full_tweet_text):
 
-'''The store_data function will store only the fields of the data received that
-are of interest. '''
+'''The store_data() function requires as inputs all the fields of the data streamed that
+are of interest for my research purposes. Note that you will need to adapt the function 
+if you wish to use different fields. It stores these elements in the corresponding column
+of the sqlite DB.'''
 
     # connect to the DB we created in section 3. I called mine 'twitter.db'
     conn = sqlite3.connect('twitter.db')
@@ -138,15 +140,20 @@ are of interest. '''
     "place_fullname, place_country, place_bounding_box_type, place_bounding_box_coords, "\
     "full_tweet_text) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
 
-    # 
+    # This line inserts the fields of the tweet into the db
     c.execute(insert_query, (created_at, id_str, text, truncated, user_id_str,
     user_location, user_description, utc_offset, time_zone, geo_enabled, geo_long,
     geo_lat, long_coord, lat_coord, place_type, place_name, place_fullname,
     place_country, place_bounding_box_type, place_bounding_box_coords, full_tweet_text))
+    # save and commit changes
     conn.commit()
+    # always close the connection when you are done
     c.close()
     conn.close()
     return
+
+# Now we need to set up the stream in a repetitive process (ie: every time
+# data is received from the API call)
 
 # Stream Listener class
 class StreamListener(tweepy.StreamListener):
@@ -154,13 +161,19 @@ class StreamListener(tweepy.StreamListener):
     # When data is received
     def on_data(self, data):
 
-        # Error handling
+        # Error handling: this was particularly helpful when building the code
+        # it was essential to check for potential errors and diagnose how to solve them
         try:
 
             # Make it JSON
             datajson = json.loads(data)
 
-            # grab the wanted data from the Tweet
+            # grab the required data fields from the Tweet
+            # store the desired information in different variables
+            
+            # I advise you to play around with this. Essentially, a JSON
+            # object works in a similar manner than python dicitonaries
+            
             created_at = datajson['created_at']
             id_str = datajson['id_str']
             text = datajson['text']
@@ -172,6 +185,9 @@ class StreamListener(tweepy.StreamListener):
             time_zone = datajson['user']['time_zone']
             geo_enabled = datajson['user']['geo_enabled']
 
+            # Note that I added conditional statements in order to extract these fields 
+            # when they were present. Indeed, not all tweets have all data fields.
+            
             if datajson['coordinates'] != None:
                 geo_long = datajson['geo']['coordinates'][1]
                 geo_lat = datajson['geo']['coordinates'][0]
@@ -206,7 +222,7 @@ class StreamListener(tweepy.StreamListener):
             except KeyError:
                 full_tweet_text = None
 
-            # insert the data into the sqlite3 database
+            # insert these variables into the sqlite3 database
             store_data(created_at, id_str, text, truncated, user_id_str,
             user_location, user_description, utc_offset, time_zone, geo_enabled,
             geo_long, geo_lat, long_coord, lat_coord, place_type, place_name,
@@ -214,14 +230,16 @@ class StreamListener(tweepy.StreamListener):
             place_bounding_box_coords, full_tweet_text)
             print("success")
 
-        # Let me know if something bad happens
+        # Diagnose issues
         except Exception as e:
             print(e)
             pass
 
-        return True
+        return True 
 
-# Driver
+# Now we need to automate the process
+# This part is used to say:
+# when the .py file runs, run all the code inside
 if __name__ == "__main__":
     while True:
 
@@ -235,8 +253,10 @@ if __name__ == "__main__":
 
         except Exception as e:
             print("error. Restarting Stream... Error:")
-            time.sleep(60)
+            time.sleep(60) # this is to get around the stream limits mentioned previously
 ```
+
+Now that the streaming code is written, we need to make the stream continuous. If we run this .py file, the stream will stop when your laptop turns off, sleeps etc. As I was interested in collecting tweets *continuously*, I used AWS cloud computing power. 
 
 5)	**Stream the tweets: run the code in your AWS EC2 instance**
 
@@ -244,11 +264,11 @@ I used [FileZilla](https://filezilla-project.org/) to transfer my .py code files
 
 Once it is installed, go to “File” and click on “Site Manager …”. Create a new site. Here is how you should fill in the blanks:
 
--	Protocol: Select “SFTP – SSH File Transfer Protocol”.
--	Host: Sign into your AWS account. Click on “EC2” then “Running Instances” to view your EC2 instances and copy the Public DNS (IPv4). This information is found either by scrolling to the right of the instance row or can be directly copied from the description of your instance. Paste this host reference here.
--	Logon type: Select “Key file”.
--	User: Write “ubuntu” as when you follow the suggested tutorial this is what you set up.
--	Key file: Select the path where you store your AWS access key.
+-	*Protocol*: Select “SFTP – SSH File Transfer Protocol”.
+-	*Host*: Sign into your AWS account. Click on “EC2” then “Running Instances” to view your EC2 instances and copy the Public DNS (IPv4). This information is found either by scrolling to the right of the instance row or can be directly copied from the description of your instance. Paste this host reference here.
+-	*Logon type*: Select “Key file”.
+-	*User*: Write “ubuntu” as when you follow the suggested tutorial this is what you set up.
+-	*Key file*: Select the path where you store your AWS access key.
 
 Now that you created a connection to transfer from/to, you can connect to it by clicking on “Server” then “Reconnect” or by going in “File”, “Site Manager…”, clicking on the site you want to connect to and clicking “Connect”. Another way is also to click on the icon with a green tick. You will now see on the right-hand side your EC2 instance directory.
 
