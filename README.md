@@ -287,6 +287,7 @@ If you followed the tutorial I suggested above to set up your AWS instance, ther
 Here are two options to check how much storage is left on your instance:
 
 a.	As in 5), open a terminal window. Change your directory to the place where your AWS key is located using “cd /the_path_where_the_key_is/”. Connect to your instance using the following line of code: ssh -i “key_name” ubuntu@“your_IP_address”. The welcome message usually tells you how much storage is in use next to “Usage of /:”. However, sometimes the welcome message looks different. Therefore, here is a second hack:
+
 b.	Open FileZilla, connect to the instance (click the icon with the green tick). Under the directory list it will indicate the “Total Size” used up. Once it gets close to 20GB, that’s the maximum to transfer your file. Indeed, 10GB are used by the instance itself.
 
 As mentioned above in 5), I use FileZilla for transfers to and from my AWS instance. This time, you want to transfer the data collected on AWS to your computer or hard drive.
