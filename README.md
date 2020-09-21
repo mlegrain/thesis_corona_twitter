@@ -274,9 +274,9 @@ Now that you created a connection to transfer from/to, you can connect to it by 
 
 Transfer both .py files you have for 1) creating your database and 2) streaming the tweets from a directory on your laptop or hard drive onto the AWS instance.
 
-Now that the code is in the instance, open a terminal window. Change your directory to the place where your AWS key is located using “cd /the_path_where_the_key_is/”. Connect to your instance using the following line of code: ssh -i “key_name” ubuntu@“your_IP_address”. Note that your IP address can be found under IPv4 Public IP either by scrolling to the right of the instance row or copying it from the description of your instance. You should now be connected to your instance from your terminal. There will be a message welcoming you onto the system. 
+Now that the code is in the instance, open a terminal window. Change your directory to the place where your AWS key is located using `cd /the_path_where_the_key_is/`. Connect to your instance using the following line of code: `ssh -i “key_name” ubuntu@“your_IP_address”`. Note that your IP address can be found under IPv4 Public IP either by scrolling to the right of the instance row or copying it from the description of your instance. You should now be connected to your instance from your terminal. There will be a message welcoming you onto the system. 
 
-Now, you can run the code. First, run “python create_db.py”. As we saw above, this will create the database with our desired table. Second, run “nohup python DBstream.py &”. Using nohup enables the code to run in the background even if you disconnect yourself from the instance. The output returned from your code will be stored in a nohup.out file. When you run this line of code, a unique code process number will be returned. Be sure to keep this number safe as you will need it to kill this process.
+Now, you can run the code. First, run “python create_db.py”. As we saw above, this will create the database with our desired table. Second, run `nohup python DBstream.py &`. Using nohup enables the code to run in the background even if you disconnect yourself from the instance. The output returned from your code will be stored in a nohup.out file. When you run this line of code, a unique code process number will be returned. Be sure to keep this number safe as you will need it to kill this process.
 
 Now that your code is up, running and that the tweets are being collected, you can log out from your instance on terminal by clicking on “control” and “d”.
 
@@ -286,7 +286,7 @@ If you followed the tutorial I suggested above to set up your AWS instance, ther
 
 Here are two options to check how much storage is left on your instance:
 
-a.	As in 5), open a terminal window. Change your directory to the place where your AWS key is located using “cd /the_path_where_the_key_is/”. Connect to your instance using the following line of code: ssh -i “key_name” ubuntu@“your_IP_address”. The welcome message usually tells you how much storage is in use next to “Usage of /:”. However, sometimes the welcome message looks different. Therefore, here is a second hack:
+a.	As in 5), open a terminal window. Change your directory to the place where your AWS key is located using `cd /the_path_where_the_key_is/`. Connect to your instance using the following line of code: `ssh -i “key_name” ubuntu@“your_IP_address”`. The welcome message usually tells you how much storage is in use next to “Usage of /:”. However, sometimes the welcome message looks different. Therefore, here is a second hack:
 
 b.	Open FileZilla, connect to the instance (click the icon with the green tick). Under the directory list it will indicate the “Total Size” used up. Once it gets close to 20GB, that’s the maximum to transfer your file. Indeed, 10GB are used by the instance itself.
 
@@ -302,11 +302,11 @@ Once the transfer is done, you can disconnect from the connection.
 
 In my case, I continuously streamed for months. Therefore, as soon as my file was in the process of being transferred, I made sure to get the streaming back and running.
 
-Remember the code process number generated after running “nohup python DBstream.py &” in Bash? Now, open terminal and reconnect to your EC2 instance, as we did above. Run “kill “process_number”” to interrupt the previous process. 
+Remember the code process number generated after running `nohup python DBstream.py &` in Bash? Now, open terminal and reconnect to your EC2 instance, as we did above. Run `kill “process_number”` to interrupt the previous process. 
 
-To start a new one, run “python create_db.py” and then “nohup python DBstream.py &” once more. Now, your stream is working again. 
+To start a new one, run `python create_db.py` and then `nohup python DBstream.py &` once more. Now, your stream is working again. 
 
-If you forgot your code process number, do not worry. Here’s an easy tip, in terminal still in your instance, run “ps -ef |grep python” this will output all the processes up and running using python. You will see that one of the rows is for our code process “python DBstream.py”. To the left, you can find the process number.
+If you forgot your code process number, do not worry. Here’s an easy tip, in terminal still in your instance, run `ps -ef |grep python` this will output all the processes up and running using python. You will see that one of the rows is for our code process `python DBstream.py`. To the left, you can find the process number.
 
 8)	**Merging all your databases together**
 
